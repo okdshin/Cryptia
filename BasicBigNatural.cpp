@@ -5,10 +5,10 @@
 
 using namespace cryptia;
 
-//using BigInteger = BasicBigNatural<65535>;
+using BigInteger = BasicBigNatural<65535>;
 //using BigInteger = BasicBigNatural<214748364>;
 //using BigInteger = BasicBigNatural<2147483647>;
-using BigInteger = BasicBigNatural<7>;
+//using BigInteger = BasicBigNatural<7>;
 
 auto Check(const BigInteger& target, const std::string& collect_answer, const std::string& message ="") -> void {
 	std::ostringstream oss;
@@ -138,6 +138,18 @@ auto TestShift() -> void {
 	
 }
 
+auto TestToByteArray() -> void {
+	auto num = BigInteger("1234567");
+	for(unsigned int i = 0; i < 10; ++i){
+		auto bytes = num.ToByteArray();
+		for(auto byte : bytes){
+			std::cout << static_cast<int>(byte) << " ";	
+		}
+		std::cout << std::endl;
+		num += 1;
+	}
+}
+
 int main(int argc, char* argv[])
 {
 	TestConstructor1();
@@ -146,6 +158,7 @@ int main(int argc, char* argv[])
 	TestMinus();
 	TestMultiply();
 	TestDivide();
+	TestToByteArray();
 	/*
 	DebugTest1();
 	TestModulate();

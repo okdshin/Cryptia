@@ -5,6 +5,7 @@
 #include <vector>
 #include <deque>
 #include <utility>
+#include "FundamentalTypes.h"
 
 namespace cryptia
 {
@@ -30,6 +31,17 @@ public:
 	auto Base()const -> BaseType;
 
 	auto Output(std::ostream& os)const -> void;
+
+	auto ToByteArray()const -> ByteArray {
+		ByteArray res;
+		//for(const auto figure : figure_list_){
+		for(int i = figure_list_.size()-1; i >= 0; --i){
+			auto figure = figure_list_.at(i);
+			res.push_back(static_cast<uint8_t>(figure & 0xff));
+			res.push_back(static_cast<uint8_t>((figure >> 8) & 0xff));
+		}
+		return res;
+	}
 
 	auto operator==(const BasicBigNatural& right)const -> bool;
 	auto operator!=(const BasicBigNatural& right)const -> bool;
