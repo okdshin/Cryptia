@@ -11,10 +11,12 @@ auto StartNewLine(std::ostream& os) -> void {
 
 int main(int argc, char* argv[])
 {
-	code::Aes aes;
+	auto aes = code::Aes::Create();
+
 	TestExpandKey128(aes);
 	TestExpandKey256(aes);
 	TestEncryptAndDecryptBlock(aes);
+	//TestEncryptBlock(aes);
 	return 0;
 }
 

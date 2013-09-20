@@ -12,12 +12,19 @@ namespace code {
 
 class Aes : public CommonKeyCryptosystem{
 public:
+	using Ptr = std::shared_ptr<Aes>;
+
+	static auto Create() -> Ptr {
+		return Ptr(new Aes());	
+	}
+	
+    ~Aes(){}
+private:
 	using State = std::array<Word, 4>;
 	using RoundKey = std::array<Word, 4>;
 	using RoundKeyList = std::vector<RoundKey>;
-    
+	
 	Aes(){}
-    ~Aes(){}
 	
 	auto DebugOut() -> void {
 		std::cout << "key:" ;
@@ -33,7 +40,6 @@ public:
 		std::cout << std::flush;
 	}
 
-
 	auto DebugOut(const RoundKey& round_key) -> void {
 		std::cout << "debugkey: ";
 		for(unsigned int col = 0; col < 4; ++col){
@@ -41,25 +47,25 @@ public:
 				std::cout.width(2);
 				std::cout.fill('0');
 				std::cout.setf(std::ios::hex, std::ios::basefield); 
-				std::cout << (((round_key.at(col) >> (8*row))) & 0xff) << " ";
+				std::cout << (((round_key[col] >> (8*row))) & 0xff) << " ";
 				std::cout.setf(std::ios::dec, std::ios::basefield); 
 			}	
 		}
 		std::cout << "\n";
 	}
 
-private:
 	auto DoSetKey(const ByteArray& byte_array) -> void {
+		round_key_list_.clear();
 		ExpandKey(byte_array);
 	}
 
 	auto DoSetBlock(const ByteArray& message, unsigned int offset) -> void {
 		assert(message.size() >= offset+16);
 		for(unsigned int i = 0; i < 4; ++i){
-			state_.at(i) = static_cast<Word>(message.at(offset + i*4))
-				| static_cast<Word>(message.at(offset + i*4 + 1)) << 8
-				| static_cast<Word>(message.at(offset + i*4 + 2)) << 16
-				| static_cast<Word>(message.at(offset + i*4 + 3)) << 24;
+			state_[i] = static_cast<Word>(message[offset + i*4])
+				| static_cast<Word>(message[offset + i*4 + 1]) << 8
+				| static_cast<Word>(message[offset + i*4 + 2]) << 16
+				| static_cast<Word>(message[offset + i*4 + 3]) << 24;
 		}
 	}
 
@@ -69,7 +75,7 @@ private:
 			SubBytes();
 			ShiftRows();
 			MixColumns();
-			AddRoundKey(round_key_list_.at(i));
+			AddRoundKey(round_key_list_[i]);
 		}
 		SubBytes();
 		ShiftRows();
@@ -81,7 +87,7 @@ private:
 		InvShiftRows();
 		InvSubBytes();
 		for(unsigned int i = round_key_list_.size()-2; i >= 1; --i){
-			AddRoundKey(round_key_list_.at(i));
+			AddRoundKey(round_key_list_[i]);
 			InvMixColumns();
 			InvShiftRows();
 			InvSubBytes();
@@ -92,21 +98,21 @@ private:
 	auto DoGetBlock(ByteArray& byte_array, unsigned int offset)const -> void {
 		for(unsigned int col = 0; col < 4; ++col){
 			for(unsigned int row = 0; row < 4; ++row){
-				byte_array.at(offset+col*4+row) = 
-					((state_.at(col) >> (8*row))) & 0xff;
+				byte_array[offset+col*4+row] = 
+					((state_[col] >> (8*row))) & 0xff;
 			}	
 		}
 	}
 
 	auto AddRoundKey(const RoundKey& key_state) -> void {
 		for(unsigned int i = 0; i < 4; ++i){
-			state_.at(i) ^= key_state.at(i);
+			state_[i] ^= key_state[i];
 		}			
 	}
 
 	auto SubBytes() -> void {
 		for(int i = 0; i < 4; ++i){
-			state_.at(i) = SubWord(state_.at(i));
+			state_[i] = SubWord(state_[i]);
 		}
 	}
 
@@ -119,7 +125,7 @@ private:
 
 	auto InvSubBytes() -> void {
 		for(int i = 0; i < 4; ++i){
-			state_.at(i) = InvSubWord(state_.at(i));
+			state_[i] = InvSubWord(state_[i]);
 		}
 	}
 
@@ -132,47 +138,47 @@ private:
 
 	auto ShiftRows() -> void {
 		auto base = state_;
-		state_.at(0) = (base.at(0) & 0x000000ff) 
-			| (base.at(1) & 0x0000ff00)
-			| (base.at(2) & 0x00ff0000)
-			| (base.at(3) & 0xff000000);
-		state_.at(1) = (base.at(1) & 0x000000ff) 
-			| (base.at(2) & 0x0000ff00)
-			| (base.at(3) & 0x00ff0000)
-			| (base.at(0) & 0xff000000);
-		state_.at(2) = (base.at(2) & 0x000000ff) 
-			| (base.at(3) & 0x0000ff00)
-			| (base.at(0) & 0x00ff0000)
-			| (base.at(1) & 0xff000000);
-		state_.at(3) = (base.at(3) & 0x000000ff) 
-			| (base.at(0) & 0x0000ff00)
-			| (base.at(1) & 0x00ff0000)
-			| (base.at(2) & 0xff000000);
+		state_[0] = (base[0] & 0x000000ff) 
+			| (base[1] & 0x0000ff00)
+			| (base[2] & 0x00ff0000)
+			| (base[3] & 0xff000000);
+		state_[1] = (base[1] & 0x000000ff) 
+			| (base[2] & 0x0000ff00)
+			| (base[3] & 0x00ff0000)
+			| (base[0] & 0xff000000);
+		state_[2] = (base[2] & 0x000000ff) 
+			| (base[3] & 0x0000ff00)
+			| (base[0] & 0x00ff0000)
+			| (base[1] & 0xff000000);
+		state_[3] = (base[3] & 0x000000ff) 
+			| (base[0] & 0x0000ff00)
+			| (base[1] & 0x00ff0000)
+			| (base[2] & 0xff000000);
 	}
 
 	auto InvShiftRows() -> void {
 		auto base = state_;
-		state_.at(0) = (base.at(0) & 0x000000ff) 
-			| (base.at(3) & 0x0000ff00)
-			| (base.at(2) & 0x00ff0000)
-			| (base.at(1) & 0xff000000);
-		state_.at(1) = (base.at(1) & 0x000000ff) 
-			| (base.at(0) & 0x0000ff00)
-			| (base.at(3) & 0x00ff0000)
-			| (base.at(2) & 0xff000000);
-		state_.at(2) = (base.at(2) & 0x000000ff) 
-			| (base.at(1) & 0x0000ff00)
-			| (base.at(0) & 0x00ff0000)
-			| (base.at(3) & 0xff000000);
-		state_.at(3) = (base.at(3) & 0x000000ff) 
-			| (base.at(2) & 0x0000ff00)
-			| (base.at(1) & 0x00ff0000)
-			| (base.at(0) & 0xff000000);
+		state_[0] = (base[0] & 0x000000ff) 
+			| (base[3] & 0x0000ff00)
+			| (base[2] & 0x00ff0000)
+			| (base[1] & 0xff000000);
+		state_[1] = (base[1] & 0x000000ff) 
+			| (base[0] & 0x0000ff00)
+			| (base[3] & 0x00ff0000)
+			| (base[2] & 0xff000000);
+		state_[2] = (base[2] & 0x000000ff) 
+			| (base[1] & 0x0000ff00)
+			| (base[0] & 0x00ff0000)
+			| (base[3] & 0xff000000);
+		state_[3] = (base[3] & 0x000000ff) 
+			| (base[2] & 0x0000ff00)
+			| (base[1] & 0x00ff0000)
+			| (base[0] & 0xff000000);
 	}
 
 	auto MixColumns() -> void {
 		for(int i = 0; i < 4; ++i){
-			state_.at(i) = MixColumn(state_.at(i));
+			state_[i] = MixColumn(state_[i]);
 		}
 	}
 	
@@ -204,7 +210,7 @@ private:
 
 	auto InvMixColumns() -> void {
 		for(int i = 0; i < 4; ++i){
-			state_.at(i) = InvMixColumn(state_.at(i));
+			state_[i] = InvMixColumn(state_[i]);
 		}
 	}
 
@@ -242,10 +248,10 @@ private:
 		unsigned int round_count = key_length + 6;
 		round_key_list_.resize(round_count+1);
 		for(unsigned int i = 0; i < key_length; ++i){
-			round_key_list_[i >> 2][i & 3] = static_cast<Word>(key.at(i*4) & 0xff)
-				| static_cast<Word>(key.at(i*4+1) & 0xff) << 8
-				| static_cast<Word>(key.at(i*4+2) & 0xff) << 16
-				| static_cast<Word>(key.at(i*4+3) & 0xff) << 24;
+			round_key_list_[i >> 2][i & 3] = static_cast<Word>(key[i*4] & 0xff)
+				| static_cast<Word>(key[i*4+1] & 0xff) << 8
+				| static_cast<Word>(key[i*4+2] & 0xff) << 16
+				| static_cast<Word>(key[i*4+3] & 0xff) << 24;
 		}
 		Word x = round_key_list_[(key_length-1) >> 2][(key_length-1) & 3];
 		for(unsigned int i = key_length; i < (round_count+1)*4; ++i){
@@ -258,12 +264,6 @@ private:
 			x ^= round_key_list_[(i-key_length) >> 2][(i-key_length) & 3];
 			round_key_list_[i >> 2][i & 3] = x;
 		}
-		/*
-		std::cout << "round_key_list_size: " << round_key_list_.size() << std::endl;
-		for(const auto& round_key : round_key_list_){
-			DebugOut(round_key);
-		}
-		*/
 	}
 
 	State state_;
@@ -273,9 +273,9 @@ private:
 	static const std::array<Byte, 256> INV_SBOX;
 	static const std::array<Byte, 12> RCON;
 
-	friend auto TestExpandKey128(Aes& aes) -> void {
+	friend auto TestExpandKey128(const Aes::Ptr& aes) -> void {
 		ByteArray key(16, 0x00);
-		aes.ExpandKey(key);
+		aes->ExpandKey(key);
 		std::array<std::array<Word, 4>, 11> answer_list({
 			RoundKey({ 0x00000000, 0x00000000, 0x00000000, 0x00000000 }),
 			RoundKey({ 0x62636363, 0x62636363, 0x62636363, 0x62636363 }),
@@ -289,19 +289,19 @@ private:
             RoundKey({ 0xb1d4d8e2, 0x8a7db9da, 0x1d7bb3de, 0x4c664941 }),
             RoundKey({ 0xb4ef5bcb, 0x3e92e211, 0x23e951cf, 0x6f8f188e })
 		});
-		for(unsigned int i = 0; i < aes.round_key_list_.size(); ++i){
-			for(unsigned int j = 0; j < aes.round_key_list_.at(i).size(); ++j){
-				auto k = aes.round_key_list_.at(i).at(j);
+		for(unsigned int i = 0; i < aes->round_key_list_.size(); ++i){
+			for(unsigned int j = 0; j < aes->round_key_list_[i].size(); ++j){
+				auto k = aes->round_key_list_[i][j];
 				auto reverse_k = static_cast<Word>((k >>  0) & 0xff) << 24 
 					| static_cast<Word>((k >>  8) & 0xff) << 16
 					| static_cast<Word>((k >> 16) & 0xff) <<  8
 					| static_cast<Word>((k >> 24) & 0xff) <<  0;
-				if(reverse_k != answer_list.at(i).at(j)){
+				if(reverse_k != answer_list[i][j]){
 					std::cout << 
 						"TestExpandKey128 Failed.\n"
 						"\tindex: " << i << "\n"
 						"\t(calc)" << reverse_k 
-							<< " != (answer)" << answer_list.at(i).at(j) << std::endl;	
+							<< " != (answer)" << answer_list[i][j] << std::endl;	
 					return;
 				}
 			}
@@ -309,9 +309,9 @@ private:
 		std::cout << "TestExpandKey128 Succeeded." << std::endl;
 	}
 
-	friend auto TestExpandKey256(Aes& aes) -> void {
+	friend auto TestExpandKey256(const Aes::Ptr& aes) -> void {
 		ByteArray key(32, 0x00);
-		aes.ExpandKey(key);
+		aes->ExpandKey(key);
 		std::array<std::array<Word, 4>, 15> answer_list({
 			RoundKey({ 0x00000000, 0x00000000, 0x00000000, 0x00000000 }),
 			RoundKey({ 0x00000000, 0x00000000, 0x00000000, 0x00000000 }),
@@ -329,19 +329,19 @@ private:
 			RoundKey({ 0x74ed0ba1, 0x739b7e25, 0x2251ad14, 0xce20d43b }),
 			RoundKey({ 0x10f80a17, 0x53bf729c, 0x45c979e7, 0xcb706385 })
 		});
-		for(unsigned int i = 0; i < aes.round_key_list_.size(); ++i){
-			for(unsigned int j = 0; j < aes.round_key_list_.at(i).size(); ++j){
-				auto k = aes.round_key_list_.at(i).at(j);
+		for(unsigned int i = 0; i < aes->round_key_list_.size(); ++i){
+			for(unsigned int j = 0; j < aes->round_key_list_[i].size(); ++j){
+				auto k = aes->round_key_list_[i][j];
 				auto reverse_k = static_cast<Word>((k >>  0) & 0xff) << 24 
 					| static_cast<Word>((k >>  8) & 0xff) << 16
 					| static_cast<Word>((k >> 16) & 0xff) <<  8
 					| static_cast<Word>((k >> 24) & 0xff) <<  0;
-				if(reverse_k != answer_list.at(i).at(j)){
+				if(reverse_k != answer_list[i][j]){
 					std::cout << 
 						"TestExpandKey256 Failed.\n"
 						"\tindex: " << i << "\n"
 						"\t(calc)" << reverse_k 
-							<< " != (answer)" << answer_list.at(i).at(j) << std::endl;	
+							<< " != (answer)" << answer_list[i][j] << std::endl;	
 					return;
 				}
 			}
@@ -349,27 +349,27 @@ private:
 		std::cout << "TestExpandKey256 Succeeded." << std::endl;
 	}
 
-	friend auto TestEncryptAndDecryptBlock(Aes& aes) -> void {
+	friend auto TestEncryptAndDecryptBlock(const Aes::Ptr& aes) -> void {
 		auto key_byte_array = ByteArray(16, 0);
-		aes.SetKey(key_byte_array);
+		aes->SetKey(key_byte_array);
 
 		auto byte_array = StringToByteArray("hello world.....");
 		
-		aes.SetBlock(byte_array, 0);
-		aes.EncryptBlock();
+		aes->SetBlock(byte_array, 0);
+		aes->EncryptBlock();
 		
 		ByteArray encrypted_byte_array(16);
-		aes.GetBlock(encrypted_byte_array, 0);
+		aes->GetBlock(encrypted_byte_array, 0);
 
-		aes.SetKey(key_byte_array);
-		aes.SetBlock(encrypted_byte_array, 0);
-		aes.DecryptBlock();
+		aes->SetKey(key_byte_array);
+		aes->SetBlock(encrypted_byte_array, 0);
+		aes->DecryptBlock();
 		
 		ByteArray decrypted_byte_array(16);
-		aes.GetBlock(decrypted_byte_array, 0);
+		aes->GetBlock(decrypted_byte_array, 0);
 
 		for(unsigned int i = 0; i < byte_array.size(); ++i){
-			if(byte_array.at(i) != decrypted_byte_array.at(i)){
+			if(byte_array[i] != decrypted_byte_array[i]){
 				std::cout << "TestEncryptAndDecryptBlock Failed." << std::endl;
 				return;
 			}
@@ -379,17 +379,17 @@ private:
 
 	/*TODO
 	friend auto TestEncryptBlock(Aes& aes) -> void {
-		auto key_byte_array = ByteArray(16, 'a');
-		aes.SetKey(key_byte_array);
+		auto key_byte_array = HexStringToByteArray("2b7e151628aed2a6abf7158809cf4f3c");
+		aes->SetKey(key_byte_array);
 
-		auto byte_array = StringToByteArray("hello world.....");
+		auto plain_text_block = HexStringToByteArray("f0f1f2f3f5f6f7f8f9fafbfcfdfeff");
 		
-		aes.SetBlock(byte_array, 0);
-		aes.EncryptBlock();
+		aes->SetBlock(plain_text_block, 0);
+		aes->EncryptBlock();
 		
 		ByteArray encrypted_byte_array(16);
-		aes.GetBlock(encrypted_byte_array, 0);
-		
+		aes->GetBlock(encrypted_byte_array, 0);
+		OutputHex(std::cout, encrypted_byte_array);
 	}
 	*/
 };
