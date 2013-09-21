@@ -8,7 +8,7 @@
 #include "CommonKeyCryptosystem.h"
 
 namespace cryptia {
-namespace code {
+namespace common_key {
 
 class Aes : public CommonKeyCryptosystem{
 public:
@@ -19,6 +19,12 @@ public:
 	}
 	
     ~Aes(){}
+
+	friend auto TestAesExpandKey128() -> void;
+	friend auto TestAesExpandKey256() -> void;
+	friend auto TestAesEncryptAndDecrypt() -> void;
+	//friend auto TestEncrypt() -> void;
+
 private:
 	using State = std::array<Word, 4>;
 	using RoundKey = std::array<Word, 4>;
@@ -272,126 +278,6 @@ private:
 	static const std::array<Byte, 256> SBOX;
 	static const std::array<Byte, 256> INV_SBOX;
 	static const std::array<Byte, 12> RCON;
-
-	friend auto TestExpandKey128(const Aes::Ptr& aes) -> void {
-		ByteArray key(16, 0x00);
-		aes->ExpandKey(key);
-		std::array<std::array<Word, 4>, 11> answer_list({
-			RoundKey({ 0x00000000, 0x00000000, 0x00000000, 0x00000000 }),
-			RoundKey({ 0x62636363, 0x62636363, 0x62636363, 0x62636363 }),
-			RoundKey({ 0x9b9898c9, 0xf9fbfbaa, 0x9b9898c9, 0xf9fbfbaa }),
-			RoundKey({ 0x90973450, 0x696ccffa, 0xf2f45733, 0x0b0fac99 }),
-			RoundKey({ 0xee06da7b, 0x876a1581, 0x759e42b2, 0x7e91ee2b }),
-			RoundKey({ 0x7f2e2b88, 0xf8443e09, 0x8dda7cbb, 0xf34b9290 }),
-			RoundKey({ 0xec614b85, 0x1425758c, 0x99ff0937, 0x6ab49ba7 }),
-            RoundKey({ 0x21751787, 0x3550620b, 0xacaf6b3c, 0xc61bf09b }),
-            RoundKey({ 0x0ef90333, 0x3ba96138, 0x97060a04, 0x511dfa9f }),
-            RoundKey({ 0xb1d4d8e2, 0x8a7db9da, 0x1d7bb3de, 0x4c664941 }),
-            RoundKey({ 0xb4ef5bcb, 0x3e92e211, 0x23e951cf, 0x6f8f188e })
-		});
-		for(unsigned int i = 0; i < aes->round_key_list_.size(); ++i){
-			for(unsigned int j = 0; j < aes->round_key_list_[i].size(); ++j){
-				auto k = aes->round_key_list_[i][j];
-				auto reverse_k = static_cast<Word>((k >>  0) & 0xff) << 24 
-					| static_cast<Word>((k >>  8) & 0xff) << 16
-					| static_cast<Word>((k >> 16) & 0xff) <<  8
-					| static_cast<Word>((k >> 24) & 0xff) <<  0;
-				if(reverse_k != answer_list[i][j]){
-					std::cout << 
-						"TestExpandKey128 Failed.\n"
-						"\tindex: " << i << "\n"
-						"\t(calc)" << reverse_k 
-							<< " != (answer)" << answer_list[i][j] << std::endl;	
-					return;
-				}
-			}
-		}
-		std::cout << "TestExpandKey128 Succeeded." << std::endl;
-	}
-
-	friend auto TestExpandKey256(const Aes::Ptr& aes) -> void {
-		ByteArray key(32, 0x00);
-		aes->ExpandKey(key);
-		std::array<std::array<Word, 4>, 15> answer_list({
-			RoundKey({ 0x00000000, 0x00000000, 0x00000000, 0x00000000 }),
-			RoundKey({ 0x00000000, 0x00000000, 0x00000000, 0x00000000 }),
-			RoundKey({ 0x62636363, 0x62636363, 0x62636363, 0x62636363 }),
-			RoundKey({ 0xaafbfbfb, 0xaafbfbfb, 0xaafbfbfb, 0xaafbfbfb }),
-			RoundKey({ 0x6f6c6ccf, 0x0d0f0fac, 0x6f6c6ccf, 0x0d0f0fac }),
-			RoundKey({ 0x7d8d8d6a, 0xd7767691, 0x7d8d8d6a, 0xd7767691 }),
-			RoundKey({ 0x5354edc1, 0x5e5be26d, 0x31378ea2, 0x3c38810e }),
-			RoundKey({ 0x968a81c1, 0x41fcf750, 0x3c717a3a, 0xeb070cab }),
-			RoundKey({ 0x9eaa8f28, 0xc0f16d45, 0xf1c6e3e7, 0xcdfe62e9 }),
-			RoundKey({ 0x2b312bdf, 0x6acddc8f, 0x56bca6b5, 0xbdbbaa1e }),
-			RoundKey({ 0x6406fd52, 0xa4f79017, 0x553173f0, 0x98cf1119 }),
-			RoundKey({ 0x6dbba90b, 0x07767584, 0x51cad331, 0xec71792f }),
-			RoundKey({ 0xe7b0e89c, 0x4347788b, 0x16760b7b, 0x8eb91a62 }),
-			RoundKey({ 0x74ed0ba1, 0x739b7e25, 0x2251ad14, 0xce20d43b }),
-			RoundKey({ 0x10f80a17, 0x53bf729c, 0x45c979e7, 0xcb706385 })
-		});
-		for(unsigned int i = 0; i < aes->round_key_list_.size(); ++i){
-			for(unsigned int j = 0; j < aes->round_key_list_[i].size(); ++j){
-				auto k = aes->round_key_list_[i][j];
-				auto reverse_k = static_cast<Word>((k >>  0) & 0xff) << 24 
-					| static_cast<Word>((k >>  8) & 0xff) << 16
-					| static_cast<Word>((k >> 16) & 0xff) <<  8
-					| static_cast<Word>((k >> 24) & 0xff) <<  0;
-				if(reverse_k != answer_list[i][j]){
-					std::cout << 
-						"TestExpandKey256 Failed.\n"
-						"\tindex: " << i << "\n"
-						"\t(calc)" << reverse_k 
-							<< " != (answer)" << answer_list[i][j] << std::endl;	
-					return;
-				}
-			}
-		}
-		std::cout << "TestExpandKey256 Succeeded." << std::endl;
-	}
-
-	friend auto TestEncryptAndDecryptBlock(const Aes::Ptr& aes) -> void {
-		auto key_byte_array = ByteArray(16, 0);
-		aes->SetKey(key_byte_array);
-
-		auto byte_array = StringToByteArray("hello world.....");
-		
-		aes->SetBlock(byte_array, 0);
-		aes->EncryptBlock();
-		
-		ByteArray encrypted_byte_array(16);
-		aes->GetBlock(encrypted_byte_array, 0);
-
-		aes->SetKey(key_byte_array);
-		aes->SetBlock(encrypted_byte_array, 0);
-		aes->DecryptBlock();
-		
-		ByteArray decrypted_byte_array(16);
-		aes->GetBlock(decrypted_byte_array, 0);
-
-		for(unsigned int i = 0; i < byte_array.size(); ++i){
-			if(byte_array[i] != decrypted_byte_array[i]){
-				std::cout << "TestEncryptAndDecryptBlock Failed." << std::endl;
-				return;
-			}
-		}
-		std::cout << "TestEncryptAndDecryptBlock Succeeded." << std::endl;
-	}
-
-	/*TODO
-	friend auto TestEncryptBlock(Aes& aes) -> void {
-		auto key_byte_array = HexStringToByteArray("2b7e151628aed2a6abf7158809cf4f3c");
-		aes->SetKey(key_byte_array);
-
-		auto plain_text_block = HexStringToByteArray("f0f1f2f3f5f6f7f8f9fafbfcfdfeff");
-		
-		aes->SetBlock(plain_text_block, 0);
-		aes->EncryptBlock();
-		
-		ByteArray encrypted_byte_array(16);
-		aes->GetBlock(encrypted_byte_array, 0);
-		OutputHex(std::cout, encrypted_byte_array);
-	}
-	*/
 };
 
 const std::array<Byte, 256> Aes::SBOX = {
@@ -464,10 +350,131 @@ const std::array<Byte, 256> Aes::INV_SBOX = {
 		0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
 };
 
-const std::array<Byte, 12> Aes::RCON {
+const std::array<Byte, 12> Aes::RCON = {
 	0x8d, 0x01, 0x02, 0x04, 0x08, 0x10,
 	0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c
 };
 
+auto TestAesExpandKey128() -> void {
+	auto aes = Aes::Create();
+	ByteArray key(16, 0x00);
+	aes->ExpandKey(key);
+	std::array<std::array<Word, 4>, 11> answer_list({
+		Aes::RoundKey({ 0x00000000, 0x00000000, 0x00000000, 0x00000000 }),
+		Aes::RoundKey({ 0x62636363, 0x62636363, 0x62636363, 0x62636363 }),
+		Aes::RoundKey({ 0x9b9898c9, 0xf9fbfbaa, 0x9b9898c9, 0xf9fbfbaa }),
+		Aes::RoundKey({ 0x90973450, 0x696ccffa, 0xf2f45733, 0x0b0fac99 }),
+		Aes::RoundKey({ 0xee06da7b, 0x876a1581, 0x759e42b2, 0x7e91ee2b }),
+		Aes::RoundKey({ 0x7f2e2b88, 0xf8443e09, 0x8dda7cbb, 0xf34b9290 }),
+		Aes::RoundKey({ 0xec614b85, 0x1425758c, 0x99ff0937, 0x6ab49ba7 }),
+		Aes::RoundKey({ 0x21751787, 0x3550620b, 0xacaf6b3c, 0xc61bf09b }),
+		Aes::RoundKey({ 0x0ef90333, 0x3ba96138, 0x97060a04, 0x511dfa9f }),
+		Aes::RoundKey({ 0xb1d4d8e2, 0x8a7db9da, 0x1d7bb3de, 0x4c664941 }),
+		Aes::RoundKey({ 0xb4ef5bcb, 0x3e92e211, 0x23e951cf, 0x6f8f188e })
+	});
+	for(unsigned int i = 0; i < aes->round_key_list_.size(); ++i){
+		for(unsigned int j = 0; j < aes->round_key_list_[i].size(); ++j){
+			auto k = aes->round_key_list_[i][j];
+			auto reverse_k = static_cast<Word>((k >>  0) & 0xff) << 24 
+				| static_cast<Word>((k >>  8) & 0xff) << 16
+				| static_cast<Word>((k >> 16) & 0xff) <<  8
+				| static_cast<Word>((k >> 24) & 0xff) <<  0;
+			if(reverse_k != answer_list[i][j]){
+				std::cout << 
+					"TestAesExpandKey128 Failed.\n"
+					"\tindex: " << i << "\n"
+					"\t(calc)" << reverse_k 
+						<< " != (answer)" << answer_list[i][j] << std::endl;	
+				return;
+			}
+		}
+	}
+	std::cout << "TestAesExpandKey128 Succeeded." << std::endl;
 }
+
+auto TestAesExpandKey256() -> void {
+	auto aes = Aes::Create();
+	ByteArray key(32, 0x00);
+	aes->ExpandKey(key);
+	std::array<std::array<Word, 4>, 15> answer_list({
+		Aes::RoundKey({ 0x00000000, 0x00000000, 0x00000000, 0x00000000 }),
+		Aes::RoundKey({ 0x00000000, 0x00000000, 0x00000000, 0x00000000 }),
+		Aes::RoundKey({ 0x62636363, 0x62636363, 0x62636363, 0x62636363 }),
+		Aes::RoundKey({ 0xaafbfbfb, 0xaafbfbfb, 0xaafbfbfb, 0xaafbfbfb }),
+		Aes::RoundKey({ 0x6f6c6ccf, 0x0d0f0fac, 0x6f6c6ccf, 0x0d0f0fac }),
+		Aes::RoundKey({ 0x7d8d8d6a, 0xd7767691, 0x7d8d8d6a, 0xd7767691 }),
+		Aes::RoundKey({ 0x5354edc1, 0x5e5be26d, 0x31378ea2, 0x3c38810e }),
+		Aes::RoundKey({ 0x968a81c1, 0x41fcf750, 0x3c717a3a, 0xeb070cab }),
+		Aes::RoundKey({ 0x9eaa8f28, 0xc0f16d45, 0xf1c6e3e7, 0xcdfe62e9 }),
+		Aes::RoundKey({ 0x2b312bdf, 0x6acddc8f, 0x56bca6b5, 0xbdbbaa1e }),
+		Aes::RoundKey({ 0x6406fd52, 0xa4f79017, 0x553173f0, 0x98cf1119 }),
+		Aes::RoundKey({ 0x6dbba90b, 0x07767584, 0x51cad331, 0xec71792f }),
+		Aes::RoundKey({ 0xe7b0e89c, 0x4347788b, 0x16760b7b, 0x8eb91a62 }),
+		Aes::RoundKey({ 0x74ed0ba1, 0x739b7e25, 0x2251ad14, 0xce20d43b }),
+		Aes::RoundKey({ 0x10f80a17, 0x53bf729c, 0x45c979e7, 0xcb706385 })
+	});
+	for(unsigned int i = 0; i < aes->round_key_list_.size(); ++i){
+		for(unsigned int j = 0; j < aes->round_key_list_[i].size(); ++j){
+			auto k = aes->round_key_list_[i][j];
+			auto reverse_k = static_cast<Word>((k >>  0) & 0xff) << 24 
+				| static_cast<Word>((k >>  8) & 0xff) << 16
+				| static_cast<Word>((k >> 16) & 0xff) <<  8
+				| static_cast<Word>((k >> 24) & 0xff) <<  0;
+			if(reverse_k != answer_list[i][j]){
+				std::cout << 
+					"TestAesExpandKey256 Failed.\n"
+					"\tindex: " << i << "\n"
+					"\t(calc)" << reverse_k 
+						<< " != (answer)" << answer_list[i][j] << std::endl;	
+				return;
+			}
+		}
+	}
+	std::cout << "TestAesExpandKey256 Succeeded." << std::endl;
 }
+
+auto TestAesEncryptAndDecryptBlock() -> void {
+	auto aes = Aes::Create();
+	auto key_byte_array = ByteArray(16, 0);
+	aes->SetKey(key_byte_array);
+
+	auto byte_array = StringToByteArray("hello world.....");
+	
+	aes->SetBlock(byte_array, 0);
+	aes->EncryptBlock();
+	
+	ByteArray encrypted_byte_array(16);
+	aes->GetBlock(encrypted_byte_array, 0);
+
+	aes->SetKey(key_byte_array);
+	aes->SetBlock(encrypted_byte_array, 0);
+	aes->DecryptBlock();
+	
+	ByteArray decrypted_byte_array(16);
+	aes->GetBlock(decrypted_byte_array, 0);
+
+	for(unsigned int i = 0; i < byte_array.size(); ++i){
+		if(byte_array[i] != decrypted_byte_array[i]){
+			std::cout << "TestAesEncryptAndDecryptBlock Failed." << std::endl;
+			return;
+		}
+	}
+	std::cout << "TestAesEncryptAndDecryptBlock Succeeded." << std::endl;
+}
+
+/*TODO
+auto TestAesEncryptBlock(Aes& aes) -> void {
+	auto key_byte_array = HexStringToByteArray("2b7e151628aed2a6abf7158809cf4f3c");
+	aes->SetKey(key_byte_array);
+
+	auto plain_text_block = HexStringToByteArray("f0f1f2f3f5f6f7f8f9fafbfcfdfeff");
+	
+	aes->SetBlock(plain_text_block, 0);
+	aes->EncryptBlock();
+	
+	ByteArray encrypted_byte_array(16);
+	aes->GetBlock(encrypted_byte_array, 0);
+	OutputHex(std::cout, encrypted_byte_array);
+}
+*/
+}}

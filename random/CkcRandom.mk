@@ -1,9 +1,9 @@
-CXX = g++ -pg -std=gnu++11
-CXXFLAGS = -O3 -Wall -g -D BASICBIGNATURAL_UNIT_TEST
+CXX = g++ -std=gnu++11
+CXXFLAGS = -Wall -g -D CKCRANDOM_UNIT_TEST
 INCLUDES = 
 LIBS =
-OBJS = BasicBigNatural.o
-PROGRAM = BasicBigNatural.out
+OBJS = CkcRandom.o
+PROGRAM = CkcRandom.out
 
 all:$(PROGRAM)
 
