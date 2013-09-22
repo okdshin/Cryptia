@@ -8,9 +8,9 @@ using namespace cryptia::random;
 
 int main(int argc, char* argv[])
 {
-	CkcRandom random(common_key::Aes::Create());
-	random.Initialize(ByteArray(48, 1));
-	auto random_array = random.GenerateRandomByteArray(9999);
+	const auto random = CkcRandom::Create(common_key::Aes::Create());
+	random->Initialize(ByteArray(48, 1));
+	auto random_array = random->GenerateRandomByteArray(9999);
 	std::vector<int> histgram(256, 0);
 	for(const auto random_byte : random_array){
 		++histgram.at(random_byte);

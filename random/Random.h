@@ -1,6 +1,7 @@
 #pragma once
 //Random:20130920
 #include <iostream>
+#include <memory>
 #include "../FundamentalTypes.h"
 
 namespace cryptia{
@@ -8,8 +9,10 @@ namespace random{
 
 class Random{
 public:
+	using Ptr = std::shared_ptr<Random>;
+
     Random(){}
-    ~Random(){}
+    virtual ~Random(){}
 
 	auto Initialize(const ByteArray& seed) -> void {
 		DoInitialize(seed);	

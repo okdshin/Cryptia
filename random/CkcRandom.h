@@ -9,10 +9,16 @@ namespace random {
 
 class CkcRandom : public Random {
 public:
-    CkcRandom(const common_key::CommonKeyCryptosystem::Ptr& ckc) : ckc_(ckc){}
+	using Ptr = std::shared_ptr<CkcRandom>;
+
+	static auto Create(const common_key::CommonKeyCryptosystem::Ptr& ckc) -> Ptr {
+		return Ptr(new CkcRandom(ckc));
+	}
     ~CkcRandom(){}
 
 private:
+    CkcRandom(const common_key::CommonKeyCryptosystem::Ptr& ckc) : ckc_(ckc){}
+	
 	auto DoInitialize(const ByteArray& seed) -> void {
 		assert(seed.size() == 48);
 		ckc_->SetKey(ByteArray(seed.begin(), seed.begin()+32));
