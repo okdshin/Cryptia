@@ -9,7 +9,8 @@ using namespace cryptia::asymmetric_key;
 //using BigInteger = BasicBigNatural<65535>;
 //using BigInteger = BasicBigNatural<214748364>;
 //using BigInteger = BasicBigNatural<2147483647>;
-using BigInteger = BasicBigNatural<7>;
+//using BigInteger = BasicBigNatural<7>;
+using BigInteger = BasicBigNatural;
 
 auto Check(const BigInteger& target, const std::string& collect_answer, const std::string& message ="") -> void {
 	std::ostringstream oss;

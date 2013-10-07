@@ -12,16 +12,33 @@ namespace asymmetric_key{
 
 using BaseType = uint32_t;
 
-template<BaseType BASE>
 class BasicBigNatural{
 public:
 	using FigureList = std::vector<BaseType>;
 
 	BasicBigNatural(BaseType num);
-	explicit BasicBigNatural(const ByteArray& byte_array);
+	explicit BasicBigNatural(const ByteArray& byte_array){
+		assert(byte_array.size()%2 == 0);
+		//static_assert(sizeof(BASE) >= 32, "implemented under int32_t");
+		for(unsigned int i = 0; i < byte_array.size(); i += 2){
+			figure_list_.push_back(
+				static_cast<BaseType>(byte_array.at(i))
+				| (static_cast<BaseType>(byte_array.at(i+1)) << 8)
+			);	
+		}	
+	}
     explicit BasicBigNatural(const std::string& num_str);
 
 	auto Output(std::ostream& os)const -> void;
+	auto ToByteArray(const BigNatural& num) -> ByteArray {
+		ByteArray res;
+		for(int i = figure_list_.size()-1; i >= 0; --i){
+			auto figure = figure_list_.at(i);
+			res.push_back(static_cast<uint8_t>(figure & 0xff));
+			res.push_back(static_cast<uint8_t>((figure >> 8) & 0xff));
+		}
+		return res;	
+	}
 
 	auto operator==(const BasicBigNatural& right)const -> bool;
 	auto operator!=(const BasicBigNatural& right)const -> bool;
@@ -54,6 +71,7 @@ public:
 	static auto PowerModulate(BasicBigNatural base, BaseType exponent, const BasicBigNatural& n) -> BasicBigNatural;
 	static auto PowerModulate(BasicBigNatural base, BasicBigNatural exponent, const BasicBigNatural& n) -> BasicBigNatural;
 	
+
 	friend auto operator>>(std::istream& is, BasicBigNatural& val) -> std::istream& {
 		std::string num_str;
 		is >> num_str;
@@ -62,6 +80,7 @@ public:
 	}
 
 	friend auto operator<<(std::ostream& os, const BasicBigNatural& val) -> std::ostream& {
+	/*
 		BasicBigNatural<10> res(0);
 		BasicBigNatural<10> base(1);
 		for(auto figure : val.figure_list_){
@@ -71,23 +90,22 @@ public:
 		for(int i = res.figure_list_.size()-1; i >= 0; --i){
 			os << res.figure_list_[i];
 		}
+	*/
 		return os;
 	}
 private:
-	const static BaseType BASE_ = BASE;
+	static const BaseType BASE = 65535;
 	auto Normalize() -> void;
 
 	FigureList figure_list_;
 };
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::ShiftFigureLeft(BaseType shift_num) -> void {
+auto BasicBigNatural::ShiftFigureLeft(BaseType shift_num) -> void {
 	figure_list_.insert(figure_list_.begin(), shift_num, 0);
 	return;
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::ShiftFigureRight(BaseType shift_num) -> void {	
+auto BasicBigNatural::ShiftFigureRight(BaseType shift_num) -> void {	
 	if(figure_list_.size() <= shift_num){
 		*this = BasicBigNatural(0);
 		return;
@@ -96,8 +114,7 @@ auto BasicBigNatural<BASE>::ShiftFigureRight(BaseType shift_num) -> void {
 	return;
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::Normalize() -> void {
+auto BasicBigNatural::Normalize() -> void {
 	auto iter = figure_list_.end()-1; 
 	while(!(*iter) && iter != figure_list_.begin()){
 		--iter;
@@ -105,8 +122,8 @@ auto BasicBigNatural<BASE>::Normalize() -> void {
 	figure_list_.erase(iter+1, figure_list_.end());
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::DivideModulate(const BasicBigNatural& left, 
+
+auto BasicBigNatural::DivideModulate(const BasicBigNatural& left, 
 		const BasicBigNatural& right) -> std::pair<BasicBigNatural, BasicBigNatural> {
 	BasicBigNatural x(right), q(0), r(0);
 	for(int i = left.figure_list_.size()-1; i >= 0; --i){
@@ -132,8 +149,8 @@ auto BasicBigNatural<BASE>::DivideModulate(const BasicBigNatural& left,
 	return std::make_pair(q, r);
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::Power(BasicBigNatural base, BaseType exponent) -> BasicBigNatural {
+
+auto BasicBigNatural::Power(BasicBigNatural base, BaseType exponent) -> BasicBigNatural {
 	BasicBigNatural res(1);
 	while(exponent > 0){
 		if(exponent&1){//IsOdd
@@ -146,8 +163,8 @@ auto BasicBigNatural<BASE>::Power(BasicBigNatural base, BaseType exponent) -> Ba
 }
 
 /*
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::Power(BasicBigNatural base, BasicBigNatural exponent) -> BasicBigNatural {
+
+auto BasicBigNatural::Power(BasicBigNatural base, BasicBigNatural exponent) -> BasicBigNatural {
 	BasicBigNatural res(1);
 	while(exponent != 0){
 		if((exponent.figure_list_.front() != 0)){
@@ -159,8 +176,8 @@ auto BasicBigNatural<BASE>::Power(BasicBigNatural base, BasicBigNatural exponent
 	return res;
 }
 */
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::Power(BasicBigNatural base, BasicBigNatural exponent) -> BasicBigNatural {
+
+auto BasicBigNatural::Power(BasicBigNatural base, BasicBigNatural exponent) -> BasicBigNatural {
 	BasicBigNatural res(1);
 	while(exponent > 0){
 		auto p = DivideModulate(exponent, 2);
@@ -173,8 +190,8 @@ auto BasicBigNatural<BASE>::Power(BasicBigNatural base, BasicBigNatural exponent
 	return res;
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::PowerModulate(BasicBigNatural base, 
+
+auto BasicBigNatural::PowerModulate(BasicBigNatural base, 
 		BaseType exponent, const BasicBigNatural& n) -> BasicBigNatural {
 	BasicBigNatural res(1);
 	while(exponent > 0){
@@ -188,8 +205,8 @@ auto BasicBigNatural<BASE>::PowerModulate(BasicBigNatural base,
 	return res%n;
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::PowerModulate(BasicBigNatural base, 
+
+auto BasicBigNatural::PowerModulate(BasicBigNatural base, 
 		BasicBigNatural exponent, const BasicBigNatural& n) -> BasicBigNatural {
 	BasicBigNatural res(1);
 	while(exponent > 0){
@@ -204,8 +221,8 @@ auto BasicBigNatural<BASE>::PowerModulate(BasicBigNatural base,
 	return res%n;
 }
 
-template<BaseType BASE>
-BasicBigNatural<BASE>::BasicBigNatural(BaseType num) : figure_list_() {
+
+BasicBigNatural::BasicBigNatural(BaseType num) : figure_list_() {
 	figure_list_.push_back(abs(num));
 	while(figure_list_.back() >= BASE){
 		auto temp = figure_list_.back();
@@ -214,8 +231,8 @@ BasicBigNatural<BASE>::BasicBigNatural(BaseType num) : figure_list_() {
 	}
 }
 
-template<BaseType BASE>
-BasicBigNatural<BASE>::BasicBigNatural(const std::string& num_str) : figure_list_() {
+
+BasicBigNatural::BasicBigNatural(const std::string& num_str) : figure_list_() {
 	int begin = 0;
 	BasicBigNatural dec_figure(1);
 	for(int i = num_str.size()-1; i >= begin; --i){
@@ -230,8 +247,8 @@ BasicBigNatural<BASE>::BasicBigNatural(const std::string& num_str) : figure_list
 	}	
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::Output(std::ostream& os)const -> void {
+
+auto BasicBigNatural::Output(std::ostream& os)const -> void {
 	os << "{";
 	for(int i = figure_list_.size()-1; i >= 0; --i){
 		os << figure_list_[i];
@@ -242,8 +259,8 @@ auto BasicBigNatural<BASE>::Output(std::ostream& os)const -> void {
 	os << "}";
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::operator==(const BasicBigNatural& right)const -> bool {
+
+auto BasicBigNatural::operator==(const BasicBigNatural& right)const -> bool {
 	if(figure_list_.size() != right.figure_list_.size()){
 		return false;	
 	}
@@ -255,13 +272,13 @@ auto BasicBigNatural<BASE>::operator==(const BasicBigNatural& right)const -> boo
 	return true;
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::operator!=(const BasicBigNatural& right)const -> bool {
+
+auto BasicBigNatural::operator!=(const BasicBigNatural& right)const -> bool {
 	return !((*this) == right);
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::operator<(const BasicBigNatural& right)const -> bool {
+
+auto BasicBigNatural::operator<(const BasicBigNatural& right)const -> bool {
 	if(figure_list_.size() < right.figure_list_.size()){
 		return true;
 	}
@@ -279,23 +296,23 @@ auto BasicBigNatural<BASE>::operator<(const BasicBigNatural& right)const -> bool
 	return false;
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::operator>(const BasicBigNatural& right)const -> bool {
+
+auto BasicBigNatural::operator>(const BasicBigNatural& right)const -> bool {
 	return right < (*this);	
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::operator>=(const BasicBigNatural& right)const -> bool {
+
+auto BasicBigNatural::operator>=(const BasicBigNatural& right)const -> bool {
 	return (*this) > right || (*this) == right;	
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::operator<=(const BasicBigNatural& right)const -> bool {
+
+auto BasicBigNatural::operator<=(const BasicBigNatural& right)const -> bool {
 	return (*this) < right || (*this) == right;	
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::operator-=(BasicBigNatural right) -> BasicBigNatural& {
+
+auto BasicBigNatural::operator-=(BasicBigNatural right) -> BasicBigNatural& {
 	if(*this < right){
 		std::swap(*this, right);
 	}
@@ -325,8 +342,8 @@ auto BasicBigNatural<BASE>::operator-=(BasicBigNatural right) -> BasicBigNatural
 	return *this;
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::operator+=(BasicBigNatural right) -> BasicBigNatural& {
+
+auto BasicBigNatural::operator+=(BasicBigNatural right) -> BasicBigNatural& {
 	const auto size = 
 		1+std::max(figure_list_.size(), right.figure_list_.size());
 	figure_list_.resize(size);
@@ -346,8 +363,8 @@ auto BasicBigNatural<BASE>::operator+=(BasicBigNatural right) -> BasicBigNatural
 	return *this;
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::operator*=(const BasicBigNatural& right) -> BasicBigNatural& {
+
+auto BasicBigNatural::operator*=(const BasicBigNatural& right) -> BasicBigNatural& {
 	FigureList res(figure_list_.size()*right.figure_list_.size()+1, 0);
 	for(unsigned int i = 0; i < figure_list_.size(); ++i){
 		BaseType carry = 0;
@@ -363,46 +380,46 @@ auto BasicBigNatural<BASE>::operator*=(const BasicBigNatural& right) -> BasicBig
 	return *this;
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::operator*(BasicBigNatural right)const -> BasicBigNatural {
+
+auto BasicBigNatural::operator*(BasicBigNatural right)const -> BasicBigNatural {
 	right *= (*this);
 	return right;
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::operator+(BasicBigNatural right)const -> BasicBigNatural {
+
+auto BasicBigNatural::operator+(BasicBigNatural right)const -> BasicBigNatural {
 	right += (*this);
 	return right;
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::operator-(BasicBigNatural right)const -> BasicBigNatural {
+
+auto BasicBigNatural::operator-(BasicBigNatural right)const -> BasicBigNatural {
 	auto temp = *this;
 	temp -= right;
 	return temp;
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::operator/=(const BasicBigNatural& right) -> BasicBigNatural& {
+
+auto BasicBigNatural::operator/=(const BasicBigNatural& right) -> BasicBigNatural& {
 	(*this) = DivideModulate(*this, right).first;
 	return *this;
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::operator%=(const BasicBigNatural& right) -> BasicBigNatural& {
+
+auto BasicBigNatural::operator%=(const BasicBigNatural& right) -> BasicBigNatural& {
 	(*this) = DivideModulate(*this, right).second;
 	return *this;
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::operator/(BasicBigNatural right)const -> BasicBigNatural {
+
+auto BasicBigNatural::operator/(BasicBigNatural right)const -> BasicBigNatural {
 	auto temp = *this;
 	temp /= right;
 	return temp;
 }
 
-template<BaseType BASE>
-auto BasicBigNatural<BASE>::operator%(BasicBigNatural right)const -> BasicBigNatural {
+
+auto BasicBigNatural::operator%(BasicBigNatural right)const -> BasicBigNatural {
 	auto temp = *this;
 	temp %= right;
 	return temp;
