@@ -132,16 +132,16 @@ public:
 		u_ = GenerateU();
 		p_ = GenerateBigPrime(byte_size/2);
 		q_ = GenerateBigPrime(byte_size/2);
-		std::cout << "\np: "; p_.Output(std::cout);
-		std::cout << "\nq: "; q_.Output(std::cout);
+		//std::cout << "\np: "; p_.Output(std::cout);
+		//std::cout << "\nq: "; q_.Output(std::cout);
 		n_ = p_*q_;
-		std::cout << "\nn: "; n_.Output(std::cout);
+		//std::cout << "\nn: "; n_.Output(std::cout);
 		l_ = (p_-1)*(q_-1);//LeastCommonMultiplyer(p_-1, q_-1);
-		std::cout << "\nl: "; l_.Output(std::cout);
+		//std::cout << "\nl: "; l_.Output(std::cout);
 		e_ = GenerateE();
-		std::cout << "\ne: "; e_.Output(std::cout);
+		//std::cout << "\ne: "; e_.Output(std::cout);
 		d_ = GenerateD();
-		std::cout << "\nd: "; d_.Output(std::cout);
+		//std::cout << "\nd: "; d_.Output(std::cout);
 		
 		//std::cout << "\ngcd(e, l): "; GreatestCommonDivisor(e_, l_).Output(std::cout);
 		//std::cout << "\n(e*d)%l: "; ((e_*d_)%l_).Output(std::cout);
