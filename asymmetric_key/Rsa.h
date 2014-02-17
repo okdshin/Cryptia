@@ -151,19 +151,20 @@ public:
 			const ByteArray& data) -> ByteArray {
 		auto n = BigNatural(n_bytes);
 		MontgomeryMultiplyer mm(n);
-		mm.Exponential(BigNatural(data), BigNatural(e_bytes)).Output(std::cout);
+		//mm.Exponential(BigNatural(data), BigNatural(e_bytes)).Output(std::cout);
 		return mm.Exponential(BigNatural(data), BigNatural(e_bytes)).ToByteArray();	
-		/*
-		return BigNatural::PowerModulate(
-			BigNatural(data), BigNatural(e_bytes), BigNatural(n_bytes)).ToByteArray();
-		*/
+	}
+
+	static auto Decrypt(const ByteArray& n_bytes, const ByteArray& d_bytes, 
+			const ByteArray& data) -> ByteArray { 
+		return Encrypt(n_bytes, d_bytes, data);
 	}
 
 	auto Decrypt(const ByteArray& data)const -> ByteArray {
-		//TODO montgomery
-		BigNatural data_num(data);
-		return BigNatural::PowerModulate(data_num, d_, n_).ToByteArray();
+		MontgomeryMultiplyer mm(n_);
+		return mm.Exponential(BigNatural(data), d_).ToByteArray();	
 	}
+	
 
 	auto GetEncryptKey()const -> ByteArray {
 		return e_.ToByteArray();	
@@ -284,6 +285,23 @@ auto TestRsaEncryptAndDecrypt() -> void {
 	auto encrypted = Rsa::Encrypt(rsa.GetN(), rsa.GetEncryptKey(), data);
 	OutputHex(std::cout << "encrypted: ", encrypted);
 	auto decrypted = rsa.Decrypt(encrypted);
+	CRYPTIA_CHECK_EQUAL(data, decrypted);
+}
+
+auto TestRsaEncryptAndDecrypt2() -> void {
+	auto random = random::CkcRandom::Create(common_key::Aes::Create());
+	auto seed = HexStringToByteArray("7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e");
+	//auto seed = ByteArray(48, time(NULL)%256);
+	OutputHex(std::cout << "seed: ", seed);
+	random->Initialize(seed);
+	Rsa rsa(random);
+	//rsa.Initialize(256);
+	rsa.Initialize(256);
+	auto data = random->GenerateRandomByteArray(16);
+	OutputHex(std::cout << "data: ", data);
+	auto encrypted = Rsa::Encrypt(rsa.GetN(), rsa.GetEncryptKey(), data);
+	OutputHex(std::cout << "encrypted: ", encrypted);
+	auto decrypted = Rsa::Decrypt(rsa.GetN(), rsa.GetDecryptKey(), encrypted);
 	CRYPTIA_CHECK_EQUAL(data, decrypted);
 }
 

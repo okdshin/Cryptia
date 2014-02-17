@@ -9,7 +9,8 @@ int main(int argc, char* argv[])
 {
 	//TestRsaGenerateBigPrime();
 	//TestRsaInitialize();
-	TestRsaEncryptAndDecrypt();
+	//TestRsaEncryptAndDecrypt();
+	TestRsaEncryptAndDecrypt2();
 
 	//GreatestCommonDivisor(646, 408).Output(std::cout);
     return 0;
